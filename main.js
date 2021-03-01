@@ -113,15 +113,19 @@ const addObsever = () => {
   }
 
   const initState = {
-    prevAppearedElemIndex: 0,
-    prevDisappearedElemIndex: 0,
-    curActivedElemIndex: 0,
+    firstVisibleElemIndex: 0,
+    lastVisibleElemIndex: 0,
   }
+  // const initState = {
+  //   prevAppearedElemIndex: 0,
+  //   prevDisappearedElemIndex: 0,
+  //   curActivedElemIndex: 0,
+  // }
 
   const { state, addStateHook } = createState(initState);
 
-  addStateHook('curActivedElemIndex', (oldValue, newValue) => {
-    console.log(`change curActivedElemIndex from ${oldValue} to ${newValue}`)
+  addStateHook('firstVisibleElemIndex', (oldValue, newValue) => {
+    console.log(`change firstVisibleElemIndex from ${oldValue} to ${newValue}`)
     switchCurActivedNavBtn(oldValue, newValue);
   })
 
@@ -133,7 +137,8 @@ const addObsever = () => {
         .sort((a, b) => a > b);
       const last = rest[rest.length - 1];
       console.log(first, last);
-      state.curActivedElemIndex = first;
+      state.firstVisibleElemIndex = first;
+      state.lastVisibleElemIndex = last;
       return null;
     }
 
@@ -141,31 +146,14 @@ const addObsever = () => {
 
     const index = parseInt(entry.target.getAttribute("data-id"), 10);
 
-    if (!entry.isIntersecting) {
-      if (index <= state.prevDisappearedElemIndex && index <= state.curActivedElemIndex) {
-        // scroll up
-        state.prevDisappearedElemIndex = index;
-        state.curActivedElemIndex = Math.min(
-          sectionsData.length - 1,
-          index + 1
-        );
-      } else if (index <= state.curActivedElemIndex) {
-        // scroll down
-        state.prevDisappearedElemIndex = index;
-        state.curActivedElemIndex = Math.min(
-          sectionsData.length - 1,
-          index + 1
-        );
-      }
-    } else {
-      const prevAppearedElemIndex = state.prevAppearedElemIndex;
-      state.prevAppearedElemIndex = index;
-      if (prevAppearedElemIndex > index && state.curActivedElemIndex >= index) {
-        // scroll up
-        state.curActivedElemIndex = index;
-      } else {
-        // scroll down
-      }
+    const prevNeighbor = Math.max(0, state.firstVisibleElemIndex - 1);
+    if (index === prevNeighbor && entry.isIntersecting) {
+      state.firstVisibleElemIndex = index;
+    } else if (index === state.firstVisibleElemIndex && !entry.isIntersecting) {
+      state.firstVisibleElemIndex = Math.min(
+        sectionsData.length - 1,
+        index + 1
+      );
     }
   }, options);
 
